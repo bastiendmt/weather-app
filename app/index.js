@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Text,
   View,
@@ -12,14 +12,35 @@ import {
 import { theme } from '../theme';
 import { MagnifyingGlassIcon } from 'react-native-heroicons/outline';
 import { CalendarDaysIcon, MapPinIcon } from 'react-native-heroicons/solid';
+import { debounce } from '../utils';
+import { fetchLocations, fetchWeatherForecast } from '../api/weather';
+import { weatherImages } from '../constants';
 
 export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [locations, setLocations] = useState([1, 2, 3]);
+  const [weather, setWeather] = useState({});
 
   const handleLocation = (loc) => {
-    console.log(`location: ${loc}`);
+    setLocations([]);
+    setShowSearch(false);
+    fetchWeatherForecast({
+      cityName: loc.name,
+      days: '7',
+    }).then((data) => setWeather(data));
   };
+
+  const handleSearch = (value) => {
+    console.log(`value: ${value}`);
+    if (value.length < 2) return;
+    fetchLocations({ cityName: value }).then((data) => {
+      console.log(data);
+      setLocations(data);
+    });
+  };
+  const handleTextDebounce = useCallback(debounce(handleSearch, 1200), []);
+
+  const { current, location } = weather;
 
   return (
     <View className='flex-1 relative'>
@@ -40,6 +61,7 @@ export default function App() {
           >
             {showSearch && (
               <TextInput
+                onChangeText={handleTextDebounce}
                 placeholder='Search city'
                 placeholderTextColor='lightgray'
                 className='pl-6 h-10 pb-1 flex-1 text-base text-white'
@@ -54,7 +76,7 @@ export default function App() {
             </TouchableOpacity>
           </View>
           {locations.length > 0 && showSearch && (
-            <View className='absolute w-full bg-gray-300 top-16 rounded-3xl'>
+            <View className='absolute w-full bg-gray-300/95 blur-3xl  top-16 rounded-3xl'>
               {locations.map((loc, index) => {
                 const showBorder = index + 1 != locations.length;
                 const borderClass = showBorder
@@ -67,7 +89,9 @@ export default function App() {
                     className={`flex-row items-center border-0 p-3 px-4 mb-1 ${borderClass}`}
                   >
                     <MapPinIcon size={20} color='gray' />
-                    <Text className='text-black text-lg ml-2'>London, UK</Text>
+                    <Text className='text-black text-lg ml-2'>
+                      {loc?.name}, {loc?.country}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
@@ -78,23 +102,26 @@ export default function App() {
         <View className='mx-4 flex justify-around flex-1 mb-2'>
           {/* location */}
           <Text className='text-white text-center text-2xl font-bold'>
-            London,
-            <Text className='text-lg font-semibold text-gray-300'>UK</Text>
+            {location?.name},
+            <Text className='text-lg font-semibold text-gray-300'>
+              {' '}
+              {location?.country}
+            </Text>
           </Text>
           {/* weather image */}
           <View className='flex-row justify-center'>
             <Image
-              source={require('../assets/images/partlycloudy.png')}
+              source={weatherImages[current?.condition?.text]}
               className='w-52 h-52'
             />
           </View>
           {/* degree celcius */}
           <View className='space-y-2'>
             <Text className='text-center font-bold text-white text-6xl ml-5'>
-              21&#176;
+              {current?.temp_c}&#176;
             </Text>
             <Text className='text-center  text-white text-xl tracking-widest'>
-              Party cloudy
+              {current?.condition?.text}
             </Text>
           </View>
           {/* other stats */}
@@ -104,18 +131,22 @@ export default function App() {
                 source={require('../assets/icons/wind.png')}
                 className='h-6 w-6'
               />
-              <Text className='text-white font-semibold text-base'>22km</Text>
+              <Text className='text-white font-semibold text-base'>
+                {current?.wind_kph}km
+              </Text>
             </View>
             <View className='flex-row space-x-2 items-center'>
               <Image
                 source={require('../assets/icons/drop.png')}
                 className='h-6 w-6'
               />
-              <Text className='text-white font-semibold text-base'>23%</Text>
+              <Text className='text-white font-semibold text-base'>
+                {current?.humidity}%
+              </Text>
             </View>
             <View className='flex-row space-x-2 items-center'>
               <Image
-                source={require('../assets/icons/sun.png')}
+                source={require('../assets/images/sun.png')}
                 className='h-6 w-6'
               />
               <Text className='text-white font-semibold text-base'>
