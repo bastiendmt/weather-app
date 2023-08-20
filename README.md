@@ -1,14 +1,11 @@
-# Expo Router Example
+# Weather app
 
-Use [`expo-router`](https://expo.github.io/router) to build native navigation using files in the `app/` directory.
+## Demo
 
-## 🚀 How to use
+### Weather screen
 
-```sh
-npx create-expo-app -e with-router
-```
+![demo](./demo/weather.png)
 
-## 📝 Notes
+### Search
 
-- [Expo Router: Docs](https://expo.github.io/router)
-- [Expo Router: Repo](https://github.com/expo/router)
+![search](./demo/search.png)

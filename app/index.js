@@ -39,7 +39,6 @@ export default function App() {
   };
 
   const handleSearch = (value) => {
-    console.log(`value: ${value}`);
     if (value.length < 2) return;
     fetchLocations({ cityName: value }).then((data) => {
       setLocations(data);
